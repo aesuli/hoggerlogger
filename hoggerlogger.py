@@ -95,6 +95,17 @@ if __name__=='__main__':
             'gpu_percent': int(sum(gpu.gpu_util for gpu in gpus.values())),
         }
 
+        disks = list()
+        for p in psutil.disk_partitions():
+            if p.fstype!='squashfs' and not p.mountpoint.startswith('/proc') and not p.mountpoint.startswith('/boot'):
+                disk_usage = psutil.disk_usage(p.mountpoint)
+                disks.append({
+                    'mount': p.mountpoint,
+                    'use_percent': int(disk_usage.percent)
+                })
+
+        system['disks'] = disks
+
         users = list()
         for user in sorted(user_threads):
             if user_cpu_percent[user]>0 or user_mem[user]>100 or user_gpu[user]>0:
