@@ -67,7 +67,7 @@ if __name__=='__main__':
         gpus = list(nvsmi.get_gpus())
         gpus = {gpu.id: gpu for gpu in gpus}
 
-        user_gpu = defaultdict(int)
+        user_gpu = defaultdict(list)
         user_gpu_percent = defaultdict(int)
         user_gpu_mem = defaultdict(int)
 
@@ -81,7 +81,7 @@ if __name__=='__main__':
         for process in processes:
             user = owner(process.pid)
             if user:
-                user_gpu[user]+=1
+                user_gpu[user].append(process.gpu_id)
                 user_gpu_percent[user] += int(gpus[process.gpu_id].gpu_util/processes_per_gpu[process.gpu_id])
                 user_gpu_mem[user] += int(process.used_memory)
 
@@ -110,13 +110,14 @@ if __name__=='__main__':
 
         users = list()
         for user in sorted(user_threads):
-            if user_cpu_percent[user]>0 or user_mem[user]>100 or user_gpu[user]>0:
+            if user_cpu_percent[user]>0 or user_mem[user]>100 or len(user_gpu[user])>0:
                 users.append({
                     'user': user,
                     'cpu_percent': user_cpu_percent[user],
                     'mem': user_mem[user],
                     'threads': user_threads[user],
-                    'gpu_count': user_gpu[user],
+                    'gpu_count': len(set(user_gpu[user])),
+                    'gpu_processes': len(user_gpu[user]),
                     'gpu_percent': user_gpu_percent[user],
                     'gpu_mem': user_gpu_mem[user],
                     'open_files': user_files[user],
