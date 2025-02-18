@@ -51,13 +51,15 @@ if __name__=='__main__':
         user_threads = defaultdict(int)
         user_mem = defaultdict(int)
         user_cpu_percent = defaultdict(int)
-        for proc in psutil.process_iter(['pid', 'name', 'username', 'cpu_percent', 'memory_info', 'num_threads']):
+        user_files = defaultdict(int)
+        for proc in psutil.process_iter(['pid', 'name', 'username', 'cpu_percent', 'memory_info', 'num_threads', 'open_files']):
             try:
                 info = proc.info  # Dictionary with requested process details
                 user = info['username']
                 user_threads[user] += info['num_threads']
                 user_mem[user] += int(info['memory_info'].rss /1024**2)
                 user_cpu_percent[user] += int(info['cpu_percent'])
+                user_files[user] += len(info['open_files']) if info['open_files'] else 0
             except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                 pass  # Skip processes that no longer exist or can't be accessed
 
@@ -117,6 +119,7 @@ if __name__=='__main__':
                     'gpu_count': user_gpu[user],
                     'gpu_percent': user_gpu_percent[user],
                     'gpu_mem': user_gpu_mem[user],
+                    'open_files': user_files[user],
                     })
 
         record = {
